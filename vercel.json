@@ -9,6 +9,10 @@
                     "public/**"
                 ]
             }
+        },
+        {
+            "src": "*.png",
+            "use": "@vercel/static"
         }
     ],
     "headers": [
