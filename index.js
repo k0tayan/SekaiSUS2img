@@ -453,12 +453,12 @@ const express = require("express");
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(express.static(path.join(__dirname, "public")));
+app.use('/static', express.static(path.join(__dirname, "public")));
 app.use(express.urlencoded({ extended: true }));
 
 app.post("/", (req, res) => {
     const chart = req.body.chart;
-    const svgString = chart2svg(chart, '/asset');
+    const svgString = chart2svg(chart, '/static/asset');
     res.send(svgString);
 });
 
