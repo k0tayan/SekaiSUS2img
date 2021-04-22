@@ -458,6 +458,8 @@ app.use(express.urlencoded({ extended: true }));
 app.post("/", (req, res) => {
     const chart = req.body.chart;
     const svgString = chart2svg(chart, 'asset');
+    res.setHeader('Access-Control-Allow-Origin', req.headers.origin);
+    res.setHeader('Access-Control-Allow-Methods', 'POST')
     res.send(svgString);
 });
 
