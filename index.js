@@ -458,7 +458,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.post("/", (req, res) => {
     const chart = req.body.chart;
-    const svgString = chart2svg(chart, 'asset');
+    const svgString = chart2svg(chart, '/asset');
     res.send(svgString);
 });
 
