@@ -458,7 +458,9 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 app.post("/", (req, res) => {
     const chart = req.body.chart;
-    const svgString = chart2svg(chart, '/asset');
+    let new_chart = chart.replace(/#(([1-9][0-9][0-9])|([0-9][1-9][0-9])|([0-9][0-9][1-9]))(08):(.*)/g, "").replace(/#(BPM)([0-9][2-9]):(.*)/g, "");
+    console.log(new_chart);
+    const svgString = chart2svg(new_chart, '/asset');
     res.send(svgString);
 });
 
