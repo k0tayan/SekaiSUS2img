@@ -11,7 +11,7 @@
             }
         },
         {
-            "src": "*.png",
+            "src": "public/asset/*.png",
             "use": "@vercel/static"
         }
     ],
