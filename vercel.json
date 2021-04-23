@@ -13,6 +13,10 @@
         {
             "src": "public/asset/*.png",
             "use": "@vercel/static"
+        },
+        {
+            "src": "public/index.html",
+            "use": "@vercel/static"
         }
     ],
     "rewrites": [
