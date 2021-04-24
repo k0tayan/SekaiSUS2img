@@ -459,9 +459,8 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.post("/", (req, res) => {
     const chart = req.body.chart;
     let new_chart = chart.replace(/#(([1-9][0-9][0-9])|([0-9][1-9][0-9])|([0-9][0-9][1-9]))(08):(.*)/g, "").replace(/#(BPM)([0-9][2-9]):(.*)/g, "");
-    console.log(new_chart);
     //const svgString = chart2svg(new_chart, 'asset');
-    const url = `https://${process.env.VERCEL_URL}` || `http://localhost:${port}`
+    const url = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : `http://localhost:${port}`;
     const svgString = chart2svg(new_chart, `${url}/asset`);
     res.send(svgString);
 });
