@@ -46,14 +46,14 @@ const chart2svg = (chartString, assetsPath) => {
         const noteSideMargin = Math.ceil(48 * scale);
         const noteEndWidth = Math.ceil(91 * scale);
         group.ele('image', {
-            href: `${assetsPath}/notes_${type}_left.png`,
+            href: b64image[`notes_${type}_left.png`],
             x: laneLefts[lane] - noteSideMargin,
             y,
             width: noteEndWidth,
             height,
             preserveAspectRatio: 'none',
         }).up().ele('image', {
-            href: `${assetsPath}/notes_${type}_right.png`,
+            href: b64image[`notes_${type}_right.png`],
             x: laneLefts[lane] - noteSideMargin + noteEndWidth + laneWidth * (width - 1),
             y,
             width: noteEndWidth,
@@ -62,7 +62,7 @@ const chart2svg = (chartString, assetsPath) => {
         });
         if (width > 1) {
             group.ele('image', {
-                href: `${assetsPath}/notes_${type}_middle.png`,
+                href: b64image[`notes_${type}_middle.png`],
                 x: laneLefts[lane] - noteSideMargin + noteEndWidth,
                 y,
                 width: laneWidth * (width - 1),
@@ -128,7 +128,7 @@ const chart2svg = (chartString, assetsPath) => {
     const drawFlickArrow = (group, measure, tick, lane, width, left = false, right = false, critical = false) => {
         const arrowLaneWidth = width > 6 ? 6 : width;
         const arrowWidth = laneWidth * arrowLaneWidth;
-        const href = `${assetsPath}/notes_flick_arrow${critical ? '_crtcl' : ''}_${('' + arrowLaneWidth).padStart(2, '0')}${(right || left) ? '_diagonal_' : ''}${left ? 'left' : (right ? 'right' : '')}.png`;
+        const href = b64image[`notes_flick_arrow${critical ? '_crtcl' : ''}_${('' + arrowLaneWidth).padStart(2, '0')}${(right || left) ? '_diagonal_' : ''}${left ? 'left' : (right ? 'right' : '')}.png`];
         const flickArrowSize = (right || left) ? flickArrowSizes.diagonal[arrowLaneWidth - 1] : flickArrowSizes.straight[arrowLaneWidth - 1];
         const scale = arrowWidth / flickArrowSize.width;
         group.ele('image', {
@@ -161,7 +161,7 @@ const chart2svg = (chartString, assetsPath) => {
     const drawWaypointDiamond = (group, measure, tick, lane, width, critical = false) => {
         const diamondWidth = laneWidth * 1.5;
         group.ele('image', {
-            href: `${assetsPath}/notes_long_among${critical ? '_crtcl' : ''}.png`,
+            href: b64image[`notes_long_among${critical ? '_crtcl' : ''}.png`],
             x: laneLefts[lane] + laneWidth * width / 2 - diamondWidth / 2,
             y: measureBottoms[measure] - tick / ticksPerBeat * pixelsPerBeat - diamondWidth / 2,
             width: diamondWidth,
@@ -188,7 +188,7 @@ const chart2svg = (chartString, assetsPath) => {
         rightX = Math.floor(rightBezier.get(rightBezier.intersects({ p1: { x: 0, y: y }, p2: { x: svgWidth, y: y } })[0]).x);
 
         group.ele('image', {
-            href: `${assetsPath}/notes_long_among${critical ? '_crtcl' : ''}.png`,
+            href: b64image[`notes_long_among${critical ? '_crtcl' : ''}.png`],
             x: (leftX + rightX) / 2 - diamondWidth / 2,
             y: y - diamondWidth / 2,
             width: diamondWidth,
@@ -449,6 +449,16 @@ const chart2svg = (chartString, assetsPath) => {
 
 }
 
+let b64image = {}
+fs.readdir('./public/asset/', (err, files) => {
+    files.forEach(file => {
+        let file_name = './public/asset/'+file
+        fs.readFile(file_name, function( err, content ) {
+            b64image[file] = "data:image/png;base64," + content.toString( 'base64' );
+        });
+    });
+});
+
 const express = require("express");
 const app = express();
 const port = process.env.PORT || 3000;
@@ -458,23 +468,56 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 app.post("/", (req, res) => {
     const chart = req.body.chart;
-    let new_chart = chart.replace(/#(([1-9][0-9][0-9])|([0-9][1-9][0-9])|([0-9][0-9][1-9]))(08):(.*)/g, "").replace(/#(BPM)([0-9][2-9]):(.*)/g, "");
-    //const svgString = chart2svg(new_chart, 'asset');
+    const new_chart = chart.replace(/#(([1-9][0-9][0-9])|([0-9][1-9][0-9])|([0-9][0-9][1-9]))(08):(.*)/g, "").replace(/#(BPM)([0-9][2-9]):(.*)/g, "");
     const url = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : `http://localhost:${port}`;
     const svgString = chart2svg(new_chart, `${url}/asset`);
-    res.send(svgString);
+    const response = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css">
+        <script src=${url}/download.js></script>
+        <style>
+            .container {
+                display:flex
+            }
+            .btn {
+                background-color: DodgerBlue;
+                border: none;
+                color: white;
+                cursor: pointer;
+                font-size: 20px;
+                postion: -webkit-sticky;
+                position: sticky;
+                top: 0;
+            }
+            .btn:hover {
+                background-color: RoyalBlue;
+            }
+            #chart {
+                display:inline-block;
+                border : solid 1px #333 ;
+            }              
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div ><button class="btn" onclick="download()"><i class="fa fa-download"></i>画像としてダウンロード</button></div>
+            <div id="chart">
+                ${svgString}
+            </div>
+        </div>
+    </body>
+    </html>`
+    res.send(response);
 });
 
 app.get('/', (req, res) => {
     res.sendFile('/index.html');
 });
 
-
 app.listen(port, () => {
     console.log(`listening at http://localhost:${port}`);
 });
-
-//const text = fs.readFileSync("0001_01.sus", 'utf8');
-//const svgString = chart2svg(text, 'public/asset');
-
-//fs.writeFile("test.svg", svgString, (err) =>{});
