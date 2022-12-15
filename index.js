@@ -4,7 +4,7 @@ const SusAnalyzer = require('sus-analyzer');
 const xmlbuilder = require('xmlbuilder2');
 const { Bezier } = require("bezier-js");
 
-const chart2svg = (chartString, assetsPath) => {
+const chart2svg = (chartString) => {
 
     const ticksPerBeat = 480;
     const susData = SusAnalyzer.getScore(chartString, ticksPerBeat);
@@ -46,14 +46,14 @@ const chart2svg = (chartString, assetsPath) => {
         const noteSideMargin = Math.ceil(48 * scale);
         const noteEndWidth = Math.ceil(91 * scale);
         group.ele('image', {
-            href: b64image[`notes_${type}_left.png`],
+            href: image_path[`notes_${type}_left.png`],
             x: laneLefts[lane] - noteSideMargin,
             y,
             width: noteEndWidth,
             height,
             preserveAspectRatio: 'none',
         }).up().ele('image', {
-            href: b64image[`notes_${type}_right.png`],
+            href: image_path[`notes_${type}_right.png`],
             x: laneLefts[lane] - noteSideMargin + noteEndWidth + laneWidth * (width - 1),
             y,
             width: noteEndWidth,
@@ -62,7 +62,7 @@ const chart2svg = (chartString, assetsPath) => {
         });
         if (width > 1) {
             group.ele('image', {
-                href: b64image[`notes_${type}_middle.png`],
+                href: image_path[`notes_${type}_middle.png`],
                 x: laneLefts[lane] - noteSideMargin + noteEndWidth,
                 y,
                 width: laneWidth * (width - 1),
@@ -128,7 +128,7 @@ const chart2svg = (chartString, assetsPath) => {
     const drawFlickArrow = (group, measure, tick, lane, width, left = false, right = false, critical = false) => {
         const arrowLaneWidth = width > 6 ? 6 : width;
         const arrowWidth = laneWidth * arrowLaneWidth;
-        const href = b64image[`notes_flick_arrow${critical ? '_crtcl' : ''}_${('' + arrowLaneWidth).padStart(2, '0')}${(right || left) ? '_diagonal_' : ''}${left ? 'left' : (right ? 'right' : '')}.png`];
+        const href = image_path[`notes_flick_arrow${critical ? '_crtcl' : ''}_${('' + arrowLaneWidth).padStart(2, '0')}${(right || left) ? '_diagonal_' : ''}${left ? 'left' : (right ? 'right' : '')}.png`];
         const flickArrowSize = (right || left) ? flickArrowSizes.diagonal[arrowLaneWidth - 1] : flickArrowSizes.straight[arrowLaneWidth - 1];
         const scale = arrowWidth / flickArrowSize.width;
         group.ele('image', {
@@ -161,7 +161,7 @@ const chart2svg = (chartString, assetsPath) => {
     const drawWaypointDiamond = (group, measure, tick, lane, width, critical = false) => {
         const diamondWidth = laneWidth * 1.5;
         group.ele('image', {
-            href: b64image[`notes_long_among${critical ? '_crtcl' : ''}.png`],
+            href: image_path[`notes_long_among${critical ? '_crtcl' : ''}.png`],
             x: laneLefts[lane] + laneWidth * width / 2 - diamondWidth / 2,
             y: measureBottoms[measure] - tick / ticksPerBeat * pixelsPerBeat - diamondWidth / 2,
             width: diamondWidth,
@@ -188,7 +188,7 @@ const chart2svg = (chartString, assetsPath) => {
         rightX = Math.floor(rightBezier.get(rightBezier.intersects({ p1: { x: 0, y: y }, p2: { x: svgWidth, y: y } })[0]).x);
 
         group.ele('image', {
-            href: b64image[`notes_long_among${critical ? '_crtcl' : ''}.png`],
+            href: image_path[`notes_long_among${critical ? '_crtcl' : ''}.png`],
             x: (leftX + rightX) / 2 - diamondWidth / 2,
             y: y - diamondWidth / 2,
             width: diamondWidth,
@@ -449,19 +449,22 @@ const chart2svg = (chartString, assetsPath) => {
 
 }
 
-let b64image = {}
-fs.readdir('./public/asset/', (err, files) => {
-    files.forEach(file => {
-        let file_name = './public/asset/'+file
-        fs.readFile(file_name, function( err, content ) {
-            b64image[file] = "data:image/png;base64," + content.toString( 'base64' );
-        });
-    });
-});
-
 const express = require("express");
 const app = express();
 const port = process.env.PORT || 3000;
+const url = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : `http://localhost:${port}`;
+
+let image_path = {}
+fs.readdir('./public/asset/', (err, files) => {
+    files.forEach(file => {
+        let file_name = './public/asset/'+file;
+        fs.readFile(file_name, function( err, content ) {
+            //image_path[file] = "data:image/png;base64," + content.toString( 'base64' );
+            //console.log(image_path[file]);
+            image_path[file] = `${url}/asset/` + file;
+        });
+    });
+});
 
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -469,7 +472,6 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.post("/", (req, res) => {
     const chart = req.body.chart;
     const new_chart = chart.replace(/#(([1-9][0-9][0-9])|([0-9][1-9][0-9])|([0-9][0-9][1-9]))(08):(.*)/g, "").replace(/#(BPM)([0-9][2-9]):(.*)/g, "");
-    const url = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : `http://localhost:${port}`;
     const svgString = chart2svg(new_chart, `${url}/asset`);
     const response = `
     <!DOCTYPE html>
@@ -504,7 +506,7 @@ app.post("/", (req, res) => {
     </head>
     <body>
         <div class="container">
-            <div ><button class="btn" onclick="download()"><i class="fa fa-download"></i>画像としてダウンロード</button></div>
+            <div ><button class="btn" onclick="download()"><i class="fa fa-download"></i></button></div>
             <div id="chart">
                 ${svgString}
             </div>
