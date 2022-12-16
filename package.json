@@ -14,6 +14,7 @@
     "convert-svg-to-png": "^0.6.4",
     "express": "^4.17.1",
     "image-to-base64": "^2.2.0",
+    "puppeteer": "^19.4.0",
     "sharp": "^0.30.0",
     "sus-analyzer": "^2.2.4",
     "xmlbuilder2": "^2.4.0"
