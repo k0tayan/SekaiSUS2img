@@ -1,3 +1,4 @@
+const serverless = require('serverless-http');
 const fs = require('fs');
 const path = require("path");
 const SusAnalyzer = require('sus-analyzer');
@@ -464,17 +465,17 @@ const chart2svg = (chartString) => {
 }
 
 const getPNG = async (svg) => {
-    if(process.env.VERCEL_URL){
+    if(process.env.NODE_ENV === `develop`){
+        return await convert(svg, {
+            puppeteer: { args: ['--no-sandbox'] }
+        });
+    } else {
         return await convert(svg, {
             puppeteer:{
                 args: chrome.args,
                 executablePath: await chrome.executablePath,
                 headless: chrome.headless,
             }
-        });
-    }else{
-        return await convert(svg, {
-            puppeteer: { args: ['--no-sandbox'] }
         });
     }
 }
@@ -568,6 +569,14 @@ fs.readdir('./public/asset/', (err, files) => {
 
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(function(req, res, next) {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header(
+      'Access-Control-Allow-Headers',
+      'Origin, X-Requested-With, Content-Type, Accept',
+    );
+    next();
+  });
 
 app.post("/", async(req, res) => {
     const chart = req.body.chart;
@@ -674,6 +683,9 @@ app.get('/', (req, res) => {
     res.sendFile('/index.html');
 });
 
-app.listen(port, () => {
-    console.log(`listening at http://localhost:${port}`);
-});
+if (process.env.NODE_ENV === `develop`) {
+    app.listen(port, () => {
+        console.log(`listening at http://localhost:${port}`);
+    });
+}
+module.exports.handler = serverless(app);
