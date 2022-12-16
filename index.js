@@ -463,9 +463,7 @@ const chart2svg = (chartString) => {
 }
 
 const getPNG = async (svg) => {
-    return await convert(svg, {
-        puppeteer: { args: ['--no-sandbox'] }
-    })
+    return await convert(svg);
 }
 
 const preprocessChart = (chart) => {
