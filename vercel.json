@@ -11,7 +11,7 @@
             }
         },
         {
-            "src": "public/asset/*.png",
+            "src": "public/asset/*.webp",
             "use": "@vercel/static"
         },
         {
