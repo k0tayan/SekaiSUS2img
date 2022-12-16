@@ -10,8 +10,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@sparticuz/chromium": "^92.0.0",
     "bezier-js": "^4.1.0",
-    "chrome-aws-lambda": "10.1.0",
     "convert-svg-to-png": "^0.6.4",
     "express": "^4.17.1",
     "sus-analyzer": "^2.2.4",

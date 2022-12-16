@@ -5,7 +5,7 @@ const xmlbuilder = require('xmlbuilder2');
 const {Bezier}  = require("bezier-js");
 const {convert}  = require('convert-svg-to-png');
 // const sharp = require('sharp');
-const chrome = require('chrome-aws-lambda');
+const chrome = require("@sparticuz/chromium");
 
 const pixelsPerBeat = 100;
 
