@@ -606,7 +606,11 @@ app.post('/landscape', async(req, res) => {
     const chart = req.body.chart;
     const newChart = preprocessChart(chart);
     const svgString = chart2svg(newChart, `${url}/asset`);
+    // 時間計測
+    const start = new Date();
     const png = await svgChart2png(svgString);
+    const end = new Date();
+    console.log(end - start);
     const pngString = png.toString('base64');
     const response = `
     <!DOCTYPE html>
