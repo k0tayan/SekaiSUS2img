@@ -5,6 +5,7 @@ const xmlbuilder = require('xmlbuilder2');
 const {Bezier}  = require("bezier-js");
 const {convert}  = require('convert-svg-to-png');
 const sharp = require('sharp');
+const chrome = require('chrome-aws-lambda');
 
 const pixelsPerBeat = 100;
 
@@ -463,6 +464,13 @@ const chart2svg = (chartString) => {
 }
 
 const getPNG = async (svg) => {
+    if(process.env.VERCEL_URL){
+        return await convert(svg, {
+            args: chrome.args,
+            executablePath: await chrome.executablePath,
+            headless: chrome.headless,
+        });
+    }
     return await convert(svg, {
         puppeteer: { args: ['--no-sandbox'] }
     })
