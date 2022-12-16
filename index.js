@@ -466,14 +466,17 @@ const chart2svg = (chartString) => {
 const getPNG = async (svg) => {
     if(process.env.VERCEL_URL){
         return await convert(svg, {
-            args: chrome.args,
-            executablePath: await chrome.executablePath,
-            headless: chrome.headless,
+            puppeteer:{
+                args: chrome.args,
+                executablePath: await chrome.executablePath,
+                headless: chrome.headless,
+            }
+        });
+    }else{
+        return await convert(svg, {
+            puppeteer: { args: ['--no-sandbox'] }
         });
     }
-    return await convert(svg, {
-        puppeteer: { args: ['--no-sandbox'] }
-    })
 }
 
 const preprocessChart = (chart) => {
