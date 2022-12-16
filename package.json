@@ -14,7 +14,6 @@
     "bezier-js": "^4.1.0",
     "convert-svg-to-png": "^0.6.4",
     "express": "^4.18.2",
-    "serverless-http": "^3.1.0",
     "sus-analyzer": "^2.2.4",
     "xmlbuilder2": "^2.4.0"
   }

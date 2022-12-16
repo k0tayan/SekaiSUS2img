@@ -1,4 +1,3 @@
-const serverless = require('serverless-http');
 const fs = require('fs');
 const path = require("path");
 const SusAnalyzer = require('sus-analyzer');
@@ -688,4 +687,3 @@ if (process.env.NODE_ENV === `develop`) {
         console.log(`listening at http://localhost:${port}`);
     });
 }
-module.exports.handler = serverless(app);
