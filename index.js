@@ -3,9 +3,6 @@ const path = require("path");
 const SusAnalyzer = require('sus-analyzer');
 const xmlbuilder = require('xmlbuilder2');
 const {Bezier}  = require("bezier-js");
-const {convert}  = require('convert-svg-to-png');
-// const sharp = require('sharp');
-const chrome = require("@sparticuz/chromium");
 
 const pixelsPerBeat = 100;
 
@@ -463,90 +460,9 @@ const chart2svg = (chartString) => {
 
 }
 
-const getPNG = async (svg) => {
-    if(process.env.VERCEL_URL){
-        return await convert(svg, {
-            puppeteer:{
-                args: chrome.args,
-                executablePath: await chrome.executablePath,
-                headless: chrome.headless,
-            }
-        });
-    }else{
-        return await convert(svg, {
-            puppeteer: { args: ['--no-sandbox'] }
-        });
-    }
-}
-
 const preprocessChart = (chart) => {
     const newChart = chart.replace(/#(([1-9][0-9][0-9])|([0-9][1-9][0-9])|([0-9][0-9][1-9]))(08):(.*)/g, "").replace(/#(BPM)([0-9][2-9]):(.*)/g, "");
     return newChart;
-}
-
-const svgChart2png = async (svgString) => {
-    const png = await getPNG(svgString);
-    return png;
-    const image = await sharp(png);
-    const meta = await image.metadata();
-    const process = [];
-    const m = Math.floor(meta.height / (pixelsPerBeat * 8));
-    console.log(meta.width, meta.height);
-    for (let i = 0; i < m; i++) {
-        const top = meta.height - (i + 1) * pixelsPerBeat * 8;
-        process.push(
-            image
-            .extract({
-                height: pixelsPerBeat * 8,
-                left: 0,
-                top: top,
-                width: meta.width
-            })
-            .toBuffer()
-        )
-    }
-    process.push(
-        image
-        .extract({
-            height: meta.height % (pixelsPerBeat * 8),
-            left: 0,
-            top: 0,
-            width: meta.width
-        })
-        .extend({
-            bottom: 0,
-            left: 0,
-            right: 0,
-            top: (pixelsPerBeat*8) - (meta.height % (pixelsPerBeat * 8))
-        })
-        .toBuffer()
-    )
-    const imageAttrs = [];
-    await Promise.all(process).then(values => {
-        values.forEach(value => imageAttrs.push(value));
-      });
-    const outputImgWidth = meta.width*(m + 1);
-    const outputImgHeight = pixelsPerBeat * 8;
-    let totalLeft = 0;
-    const compositeParams = imageAttrs.map(img => {
-        const left = totalLeft;
-        totalLeft += meta.width;
-        return {
-          input: img,
-          gravity: "northwest",
-          left: left,
-          top: 0
-        };
-      });
-    const concatImage = await sharp({
-        create: {
-          width: outputImgWidth,
-          height: outputImgHeight,
-          channels: 4,
-          background: { r: 255, g: 255, b: 255, alpha: 0 }
-        }
-    }).composite(compositeParams);
-    return concatImage.webp().toBuffer();
 }
 
 const express = require("express");
@@ -559,8 +475,6 @@ fs.readdir('./public/asset/', (err, files) => {
     files.forEach(file => {
         let file_name = './public/asset/'+file;
         fs.readFile(file_name, function( err, content ) {
-            //image_path[file] = "data:image/png;base64," + content.toString( 'base64' );
-            //console.log(image_path[file]);
             image_path[file] = `${url}/asset/` + file;
         });
     });
@@ -599,8 +513,6 @@ app.post('/landscape', async(req, res) => {
     const chart = req.body.chart;
     const newChart = preprocessChart(chart);
     const svgString = chart2svg(newChart, `${url}/asset`);
-    const png = await svgChart2png(svgString);
-    const pngString = png.toString('base64');
     const response = `
     <!DOCTYPE html>
     <html lang="en">
@@ -610,9 +522,8 @@ app.post('/landscape', async(req, res) => {
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css">
         <script>
             var pixelsPerBeat = ${pixelsPerBeat};
-            var pngString = "${pngString}";
         </script>
-        <script src=${url}/landscape.js></script>
+        <script type="module" src=${url}/landscape.js></script>
         <script src=${url}/download.js></script>
         <style>
             body {
