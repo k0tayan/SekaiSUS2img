@@ -2,14 +2,17 @@ const fs = require('fs');
 const path = require("path");
 const SusAnalyzer = require('sus-analyzer');
 const xmlbuilder = require('xmlbuilder2');
-const { Bezier } = require("bezier-js");
+const {Bezier}  = require("bezier-js");
+const {convert}  = require('convert-svg-to-png');
+const sharp = require('sharp');
+
+const pixelsPerBeat = 100;
 
 const chart2svg = (chartString) => {
 
     const ticksPerBeat = 480;
     const susData = SusAnalyzer.getScore(chartString, ticksPerBeat);
 
-    const pixelsPerBeat = 100; // TODO: scale by defining full height (maybe? how about bpm changes?)
     const topMargin = Math.ceil(pixelsPerBeat / 8);
     const bottomMargin = Math.ceil(pixelsPerBeat / 8);
     const leftMargin = Math.ceil(pixelsPerBeat / 8) + 50;
@@ -269,6 +272,7 @@ const chart2svg = (chartString) => {
         height: svgHeight,
     });
     const backgroundGroup = svg.ele('g', { id: 'background' });
+    const laneBackgroundGroup = svg.ele('g', { id: 'laneBackground' });
     const linesGroup = svg.ele('g', { id: 'lines' });
     const laneLinesGroup = linesGroup.ele('g', { id: 'laneLines' })
     const measureLinesGroup = linesGroup.ele('g', { id: 'measureLines' });
@@ -280,6 +284,14 @@ const chart2svg = (chartString) => {
     const arrowsGroup = svg.ele('g', { id: 'arrows' });
 
     backgroundGroup.ele('rect', {
+        fill: '#000044FF',
+        width: svgWidth,
+        height: svgHeight,
+        x: 0,
+        y: 0,
+    });
+
+    laneBackgroundGroup.ele('rect', {
         fill: '#00304030',
         // fill: '#000000FF',
         width: laneWidth * 12,
@@ -310,8 +322,9 @@ const chart2svg = (chartString) => {
         measureLinesGroup.ele('text', {
             'font-family': 'sans-serif',
             'font-size': '14pt',
+            'fill': '#FFF',
             x: `24px`,
-            y: `${y}px`
+            y: `${y+5}px`
         }
         ).txt(('000' + (i + 1)).slice(-3));
     });
@@ -449,6 +462,81 @@ const chart2svg = (chartString) => {
 
 }
 
+const getPNG = async (svg) => {
+    return await convert(svg, {
+        puppeteer: { args: ['--no-sandbox'] }
+    })
+}
+
+const preprocessChart = (chart) => {
+    const newChart = chart.replace(/#(([1-9][0-9][0-9])|([0-9][1-9][0-9])|([0-9][0-9][1-9]))(08):(.*)/g, "").replace(/#(BPM)([0-9][2-9]):(.*)/g, "");
+    return newChart;
+}
+
+const svgChart2png = async (svgString) => {
+    const png = await getPNG(svgString);
+    const image = await sharp(png);
+    const meta = await image.metadata();
+    const process = [];
+    const m = Math.floor(meta.height / (pixelsPerBeat * 8));
+    console.log(meta.width, meta.height);
+    for (let i = 0; i < m; i++) {
+        const top = meta.height - (i + 1) * pixelsPerBeat * 8;
+        process.push(
+            image
+            .extract({
+                height: pixelsPerBeat * 8,
+                left: 0,
+                top: top,
+                width: meta.width
+            })
+            .toBuffer()
+        )
+    }
+    process.push(
+        image
+        .extract({
+            height: meta.height % (pixelsPerBeat * 8),
+            left: 0,
+            top: 0,
+            width: meta.width
+        })
+        .extend({
+            bottom: 0,
+            left: 0,
+            right: 0,
+            top: (pixelsPerBeat*8) - (meta.height % (pixelsPerBeat * 8))
+        })
+        .toBuffer()
+    )
+    const imageAttrs = [];
+    await Promise.all(process).then(values => {
+        values.forEach(value => imageAttrs.push(value));
+      });
+    const outputImgWidth = meta.width*(m + 1);
+    const outputImgHeight = pixelsPerBeat * 8;
+    let totalLeft = 0;
+    const compositeParams = imageAttrs.map(img => {
+        const left = totalLeft;
+        totalLeft += meta.width;
+        return {
+          input: img,
+          gravity: "northwest",
+          left: left,
+          top: 0
+        };
+      });
+    const concatImage = await sharp({
+        create: {
+          width: outputImgWidth,
+          height: outputImgHeight,
+          channels: 4,
+          background: { r: 255, g: 255, b: 255, alpha: 0 }
+        }
+    }).composite(compositeParams);
+    return concatImage.png().toBuffer();
+}
+
 const express = require("express");
 const app = express();
 const port = process.env.PORT || 3000;
@@ -469,10 +557,38 @@ fs.readdir('./public/asset/', (err, files) => {
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-app.post("/", (req, res) => {
+app.post("/", async(req, res) => {
     const chart = req.body.chart;
-    const new_chart = chart.replace(/#(([1-9][0-9][0-9])|([0-9][1-9][0-9])|([0-9][0-9][1-9]))(08):(.*)/g, "").replace(/#(BPM)([0-9][2-9]):(.*)/g, "");
-    const svgString = chart2svg(new_chart, `${url}/asset`);
+    const newChart = preprocessChart(chart);
+    const svgString = chart2svg(newChart, `${url}/asset`);
+    const response = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css">
+        <style>
+            body {
+                background-color: #003040;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="chart">
+            ${svgString}
+        </div>
+    </body>
+    </html>`
+    res.send(response);
+});
+
+app.post('/landscape', async(req, res) => {
+    const chart = req.body.chart;
+    const newChart = preprocessChart(chart);
+    const svgString = chart2svg(newChart, `${url}/asset`);
+    const png = await svgChart2png(svgString);
+    const pngString = png.toString('base64');
     const response = `
     <!DOCTYPE html>
     <html lang="en">
@@ -482,8 +598,21 @@ app.post("/", (req, res) => {
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css">
         <script src=${url}/download.js></script>
         <style>
+            body {
+                background-color: #003040;
+            }
             .container {
-                display:flex
+                display:flex;
+                padding: 10px;
+                align-items: flex-start;
+
+            }
+            .landscape {
+                background-color: #000000;
+                display: flex;
+                border: 8px solid #ba55d3;
+                border-radius: 10px;
+                margin-left: 10px;
             }
             .btn {
                 background-color: DodgerBlue;
@@ -494,27 +623,36 @@ app.post("/", (req, res) => {
                 postion: -webkit-sticky;
                 position: sticky;
                 top: 0;
+                padding: 3px;
             }
             .btn:hover {
                 background-color: RoyalBlue;
             }
             #chart {
-                display:inline-block;
-                border : solid 1px #333 ;
-            }              
+                background-color: #000000;
+                border: 8px solid #ba55d3;
+                border-radius: 10px;
+            }
+            #chart-landscape {
+                height: 600px;
+            }
         </style>
     </head>
     <body>
         <div class="container">
-            <div ><button class="btn" onclick="download()"><i class="fa fa-download"></i></button></div>
             <div id="chart">
                 ${svgString}
+            </div>
+            <div class="landscape">
+                <div><button class="btn" onclick="download()"><i class="fa fa-download">DL</i></button></div>
+                <img src="data:image/png;base64,${pngString}" id="chart-landscape">
             </div>
         </div>
     </body>
     </html>`
     res.send(response);
 });
+
 
 app.get('/', (req, res) => {
     res.sendFile('/index.html');
