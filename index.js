@@ -614,7 +614,7 @@ app.post('/landscape', async(req, res) => {
     const pngString = png.toString('base64');
     const response = `
     <!DOCTYPE html>
-    <html lang="en">
+    <html lang="ja">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -667,6 +667,7 @@ app.post('/landscape', async(req, res) => {
         </style>
     </head>
     <body>
+        <div><font color="white">変換時間: ${end - start}ms</font></div>
         <div class="container">
             <div id="chart">
                 ${svgString}
