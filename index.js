@@ -50,14 +50,14 @@ const chart2svg = (chartString) => {
         const noteSideMargin = Math.ceil(48 * scale);
         const noteEndWidth = Math.ceil(91 * scale);
         group.ele('image', {
-            href: image_path[`notes_${type}_left.png`],
+            href: image_path[`notes_${type}_left.webp`],
             x: laneLefts[lane] - noteSideMargin,
             y,
             width: noteEndWidth,
             height,
             preserveAspectRatio: 'none',
         }).up().ele('image', {
-            href: image_path[`notes_${type}_right.png`],
+            href: image_path[`notes_${type}_right.webp`],
             x: laneLefts[lane] - noteSideMargin + noteEndWidth + laneWidth * (width - 1),
             y,
             width: noteEndWidth,
@@ -66,7 +66,7 @@ const chart2svg = (chartString) => {
         });
         if (width > 1) {
             group.ele('image', {
-                href: image_path[`notes_${type}_middle.png`],
+                href: image_path[`notes_${type}_middle.webp`],
                 x: laneLefts[lane] - noteSideMargin + noteEndWidth,
                 y,
                 width: laneWidth * (width - 1),
@@ -132,7 +132,7 @@ const chart2svg = (chartString) => {
     const drawFlickArrow = (group, measure, tick, lane, width, left = false, right = false, critical = false) => {
         const arrowLaneWidth = width > 6 ? 6 : width;
         const arrowWidth = laneWidth * arrowLaneWidth;
-        const href = image_path[`notes_flick_arrow${critical ? '_crtcl' : ''}_${('' + arrowLaneWidth).padStart(2, '0')}${(right || left) ? '_diagonal_' : ''}${left ? 'left' : (right ? 'right' : '')}.png`];
+        const href = image_path[`notes_flick_arrow${critical ? '_crtcl' : ''}_${('' + arrowLaneWidth).padStart(2, '0')}${(right || left) ? '_diagonal_' : ''}${left ? 'left' : (right ? 'right' : '')}.webp`];
         const flickArrowSize = (right || left) ? flickArrowSizes.diagonal[arrowLaneWidth - 1] : flickArrowSizes.straight[arrowLaneWidth - 1];
         const scale = arrowWidth / flickArrowSize.width;
         group.ele('image', {
@@ -165,7 +165,7 @@ const chart2svg = (chartString) => {
     const drawWaypointDiamond = (group, measure, tick, lane, width, critical = false) => {
         const diamondWidth = laneWidth * 1.5;
         group.ele('image', {
-            href: image_path[`notes_long_among${critical ? '_crtcl' : ''}.png`],
+            href: image_path[`notes_long_among${critical ? '_crtcl' : ''}.webp`],
             x: laneLefts[lane] + laneWidth * width / 2 - diamondWidth / 2,
             y: measureBottoms[measure] - tick / ticksPerBeat * pixelsPerBeat - diamondWidth / 2,
             width: diamondWidth,
@@ -192,7 +192,7 @@ const chart2svg = (chartString) => {
         rightX = Math.floor(rightBezier.get(rightBezier.intersects({ p1: { x: 0, y: y }, p2: { x: svgWidth, y: y } })[0]).x);
 
         group.ele('image', {
-            href: image_path[`notes_long_among${critical ? '_crtcl' : ''}.png`],
+            href: image_path[`notes_long_among${critical ? '_crtcl' : ''}.webp`],
             x: (leftX + rightX) / 2 - diamondWidth / 2,
             y: y - diamondWidth / 2,
             width: diamondWidth,
@@ -546,7 +546,7 @@ const svgChart2png = async (svgString) => {
           background: { r: 255, g: 255, b: 255, alpha: 0 }
         }
     }).composite(compositeParams);
-    return concatImage.png().toBuffer();
+    return concatImage.webp().toBuffer();
 }
 
 const express = require("express");
