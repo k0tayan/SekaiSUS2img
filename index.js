@@ -4,7 +4,7 @@ const SusAnalyzer = require('sus-analyzer');
 const xmlbuilder = require('xmlbuilder2');
 const {Bezier}  = require("bezier-js");
 const {convert}  = require('convert-svg-to-png');
-const sharp = require('sharp');
+// const sharp = require('sharp');
 const chrome = require('chrome-aws-lambda');
 
 const pixelsPerBeat = 100;
@@ -486,6 +486,7 @@ const preprocessChart = (chart) => {
 
 const svgChart2png = async (svgString) => {
     const png = await getPNG(svgString);
+    return png;
     const image = await sharp(png);
     const meta = await image.metadata();
     const process = [];
@@ -607,6 +608,11 @@ app.post('/landscape', async(req, res) => {
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css">
+        <script>
+            var pixelsPerBeat = ${pixelsPerBeat};
+            var pngString = "${pngString}";
+        </script>
+        <script src=${url}/landscape.js></script>
         <script src=${url}/download.js></script>
         <style>
             body {
@@ -656,14 +662,13 @@ app.post('/landscape', async(req, res) => {
             </div>
             <div class="landscape">
                 <div><button class="btn" onclick="download()"><i class="fa fa-download">DL</i></button></div>
-                <img src="data:image/png;base64,${pngString}" id="chart-landscape">
+                <canvas id="chart-landscape" width="160px" height="${pixelsPerBeat * 8}px"></canvas>
             </div>
         </div>
     </body>
     </html>`
     res.send(response);
 });
-
 
 app.get('/', (req, res) => {
     res.sendFile('/index.html');

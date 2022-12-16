@@ -1,7 +1,7 @@
 function download() {
+    const canvas = document.getElementById("chart-landscape");
     const dlLink = document.createElement('a');
-    const pngString = document.getElementById("chart-landscape").src;
-    dlLink.href = encodeURI(pngString);
+    dlLink.href = canvas.toDataURL("image/png");
     dlLink.download = "image";
     document.body.appendChild(dlLink);
     dlLink.click();
