@@ -4,7 +4,6 @@ const SusAnalyzer = require('sus-analyzer');
 const xmlbuilder = require('xmlbuilder2');
 const {Bezier}  = require("bezier-js");
 const {convert}  = require('convert-svg-to-png');
-// const sharp = require('sharp');
 const chrome = require("@sparticuz/chromium");
 
 const pixelsPerBeat = 100;
@@ -682,8 +681,6 @@ app.get('/', (req, res) => {
     res.sendFile('/index.html');
 });
 
-if (process.env.NODE_ENV === `develop`) {
-    app.listen(port, () => {
-        console.log(`listening at http://localhost:${port}`);
-    });
-}
+app.listen(port, () => {
+    console.log(`listening at http://localhost:${port}`);
+});
