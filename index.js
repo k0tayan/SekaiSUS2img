@@ -4,7 +4,6 @@ const SusAnalyzer = require('sus-analyzer');
 const xmlbuilder = require('xmlbuilder2');
 const {Bezier}  = require("bezier-js");
 const {convert}  = require('convert-svg-to-png');
-const chrome = require("@sparticuz/chromium");
 
 const pixelsPerBeat = 100;
 
@@ -463,19 +462,9 @@ const chart2svg = (chartString) => {
 }
 
 const getPNG = async (svg) => {
-    if(process.env.NODE_ENV === `develop`){
-        return await convert(svg, {
-            puppeteer: { args: ['--no-sandbox'] }
-        });
-    } else {
-        return await convert(svg, {
-            puppeteer:{
-                args: chrome.args,
-                executablePath: await chrome.executablePath,
-                headless: chrome.headless,
-            }
-        });
-    }
+    return await convert(svg, {
+        puppeteer: { args: ['--no-sandbox'] }
+    });
 }
 
 const preprocessChart = (chart) => {
@@ -551,7 +540,8 @@ const svgChart2png = async (svgString) => {
 const express = require("express");
 const app = express();
 const port = process.env.PORT || 3000;
-const url = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : `http://localhost:${port}`;
+let url = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : `http://localhost:${port}`;
+url = process.env.GCE_URL ? `https://${process.env.GCE_URL}` : url;
 
 let image_path = {}
 fs.readdir('./public/asset/', (err, files) => {
@@ -579,7 +569,7 @@ app.use(function(req, res, next) {
 app.post("/", async(req, res) => {
     const chart = req.body.chart;
     const newChart = preprocessChart(chart);
-    const svgString = chart2svg(newChart, `${url}/asset`);
+    const svgString = chart2svg(newChart);
     const response = `
     <!DOCTYPE html>
     <html lang="en">
@@ -605,7 +595,7 @@ app.post("/", async(req, res) => {
 app.post('/landscape', async(req, res) => {
     const chart = req.body.chart;
     const newChart = preprocessChart(chart);
-    const svgString = chart2svg(newChart, `${url}/asset`);
+    const svgString = chart2svg(newChart, `asset`);
     // 時間計測
     const start = new Date();
     const png = await svgChart2png(svgString);
@@ -687,5 +677,5 @@ app.get('/', (req, res) => {
 });
 
 app.listen(port, () => {
-    console.log(`listening at http://localhost:${port}`);
+    console.log(`listening at ${url}`);
 });
