@@ -471,7 +471,7 @@ const preprocessChart = (chart) => {
     // BPM定義を削除
     chart = chart.replace(/#BPM.*/g, "");
     // BPM変化を削除
-    chart = chart.replace(/#\d+08.*/g, "");
+    chart = chart.replace(/#\d+08:.*/g, "");
     //const newChart = chart.replace(/#(([1-9][0-9][0-9])|([0-9][1-9][0-9])|([0-9][0-9][1-9]))(08):(.*)/g, "").replace(/#(BPM)([0-9][2-9]):(.*)/g, "");
     return chart;
 }
