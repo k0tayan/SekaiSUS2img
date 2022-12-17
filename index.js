@@ -23,66 +23,6 @@ const preprocessChart = (chart) => {
 const svgChart2png = async (svgString) => {
     const png = await getPNG(svgString);
     return png;
-    const image = await sharp(png);
-    const meta = await image.metadata();
-    const process = [];
-    const m = Math.floor(meta.height / (pixelsPerBeat * 8));
-    console.log(meta.width, meta.height);
-    for (let i = 0; i < m; i++) {
-        const top = meta.height - (i + 1) * pixelsPerBeat * 8;
-        process.push(
-            image
-            .extract({
-                height: pixelsPerBeat * 8,
-                left: 0,
-                top: top,
-                width: meta.width
-            })
-            .toBuffer()
-        )
-    }
-    process.push(
-        image
-        .extract({
-            height: meta.height % (pixelsPerBeat * 8),
-            left: 0,
-            top: 0,
-            width: meta.width
-        })
-        .extend({
-            bottom: 0,
-            left: 0,
-            right: 0,
-            top: (pixelsPerBeat*8) - (meta.height % (pixelsPerBeat * 8))
-        })
-        .toBuffer()
-    )
-    const imageAttrs = [];
-    await Promise.all(process).then(values => {
-        values.forEach(value => imageAttrs.push(value));
-      });
-    const outputImgWidth = meta.width*(m + 1);
-    const outputImgHeight = pixelsPerBeat * 8;
-    let totalLeft = 0;
-    const compositeParams = imageAttrs.map(img => {
-        const left = totalLeft;
-        totalLeft += meta.width;
-        return {
-          input: img,
-          gravity: "northwest",
-          left: left,
-          top: 0
-        };
-      });
-    const concatImage = await sharp({
-        create: {
-          width: outputImgWidth,
-          height: outputImgHeight,
-          channels: 4,
-          background: { r: 255, g: 255, b: 255, alpha: 0 }
-        }
-    }).composite(compositeParams);
-    return concatImage.webp().toBuffer();
 }
 
 const express = require("express");
