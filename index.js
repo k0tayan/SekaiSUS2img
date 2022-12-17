@@ -540,8 +540,6 @@ const svgChart2png = async (svgString) => {
 const express = require("express");
 const app = express();
 const port = process.env.PORT || 3000;
-let url = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : `http://localhost:${port}`;
-url = process.env.GCE_URL ? `https://${process.env.GCE_URL}` : url;
 
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -557,7 +555,9 @@ app.use(function(req, res, next) {
 app.post("/", async(req, res) => {
     const chart = req.body.chart;
     const newChart = preprocessChart(chart);
-    const svgString = chart2svg(newChart, `${req.protocol}://${req.headers.host}/asset`);
+    const url = `${req.protocol}://${req.headers.host}`;
+    console.log(url);
+    const svgString = chart2svg(newChart, `${url}/asset`);
     const response = `
     <!DOCTYPE html>
     <html lang="en">
@@ -583,7 +583,9 @@ app.post("/", async(req, res) => {
 app.post('/landscape', async(req, res) => {
     const chart = req.body.chart;
     const newChart = preprocessChart(chart);
-    const svgString = chart2svg(newChart, `${req.protocol}://${req.headers.host}/asset`);
+    const url = `${req.protocol}://${req.headers.host}`;
+    console.log(url);
+    const svgString = chart2svg(newChart, `${url}/asset`);
     // 時間計測
     const start = new Date();
     const png = await svgChart2png(svgString);
@@ -601,8 +603,8 @@ app.post('/landscape', async(req, res) => {
             var pixelsPerBeat = ${pixelsPerBeat};
             var pngString = "${pngString}";
         </script>
-        <script src=${url}/landscape.js></script>
-        <script src=${url}/download.js></script>
+        <script src="landscape.js"></script>
+        <script src="download.js"></script>
         <style>
             body {
                 background-color: #003040;
@@ -665,5 +667,5 @@ app.get('/', (req, res) => {
 });
 
 app.listen(port, () => {
-    console.log(`listening at ${url}`);
+    console.log(`listening at http://localhost:${port}`);
 });
