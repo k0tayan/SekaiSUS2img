@@ -7,7 +7,7 @@ const {convert}  = require('convert-svg-to-png');
 
 const pixelsPerBeat = 100;
 
-const chart2svg = (chartString) => {
+const chart2svg = (chartString, assetsPath) => {
 
     const ticksPerBeat = 480;
     const susData = SusAnalyzer.getScore(chartString, ticksPerBeat);
@@ -48,14 +48,14 @@ const chart2svg = (chartString) => {
         const noteSideMargin = Math.ceil(48 * scale);
         const noteEndWidth = Math.ceil(91 * scale);
         group.ele('image', {
-            href: image_path[`notes_${type}_left.webp`],
+            href: `${assetsPath}/notes_${type}_left.webp`,
             x: laneLefts[lane] - noteSideMargin,
             y,
             width: noteEndWidth,
             height,
             preserveAspectRatio: 'none',
         }).up().ele('image', {
-            href: image_path[`notes_${type}_right.webp`],
+            href: `${assetsPath}/notes_${type}_right.webp`,
             x: laneLefts[lane] - noteSideMargin + noteEndWidth + laneWidth * (width - 1),
             y,
             width: noteEndWidth,
@@ -64,7 +64,7 @@ const chart2svg = (chartString) => {
         });
         if (width > 1) {
             group.ele('image', {
-                href: image_path[`notes_${type}_middle.webp`],
+                href: `${assetsPath}/notes_${type}_middle.webp`,
                 x: laneLefts[lane] - noteSideMargin + noteEndWidth,
                 y,
                 width: laneWidth * (width - 1),
@@ -130,7 +130,7 @@ const chart2svg = (chartString) => {
     const drawFlickArrow = (group, measure, tick, lane, width, left = false, right = false, critical = false) => {
         const arrowLaneWidth = width > 6 ? 6 : width;
         const arrowWidth = laneWidth * arrowLaneWidth;
-        const href = image_path[`notes_flick_arrow${critical ? '_crtcl' : ''}_${('' + arrowLaneWidth).padStart(2, '0')}${(right || left) ? '_diagonal_' : ''}${left ? 'left' : (right ? 'right' : '')}.webp`];
+        const href = `${assetsPath}/notes_flick_arrow${critical ? '_crtcl' : ''}_${('' + arrowLaneWidth).padStart(2, '0')}${(right || left) ? '_diagonal_' : ''}${left ? 'left' : (right ? 'right' : '')}.webp`;
         const flickArrowSize = (right || left) ? flickArrowSizes.diagonal[arrowLaneWidth - 1] : flickArrowSizes.straight[arrowLaneWidth - 1];
         const scale = arrowWidth / flickArrowSize.width;
         group.ele('image', {
@@ -163,7 +163,7 @@ const chart2svg = (chartString) => {
     const drawWaypointDiamond = (group, measure, tick, lane, width, critical = false) => {
         const diamondWidth = laneWidth * 1.5;
         group.ele('image', {
-            href: image_path[`notes_long_among${critical ? '_crtcl' : ''}.webp`],
+            href: `${assetsPath}/notes_long_among${critical ? '_crtcl' : ''}.webp`,
             x: laneLefts[lane] + laneWidth * width / 2 - diamondWidth / 2,
             y: measureBottoms[measure] - tick / ticksPerBeat * pixelsPerBeat - diamondWidth / 2,
             width: diamondWidth,
@@ -190,7 +190,7 @@ const chart2svg = (chartString) => {
         rightX = Math.floor(rightBezier.get(rightBezier.intersects({ p1: { x: 0, y: y }, p2: { x: svgWidth, y: y } })[0]).x);
 
         group.ele('image', {
-            href: image_path[`notes_long_among${critical ? '_crtcl' : ''}.webp`],
+            href: `${assetsPath}/notes_long_among${critical ? '_crtcl' : ''}.webp`,
             x: (leftX + rightX) / 2 - diamondWidth / 2,
             y: y - diamondWidth / 2,
             width: diamondWidth,
@@ -543,18 +543,6 @@ const port = process.env.PORT || 3000;
 let url = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : `http://localhost:${port}`;
 url = process.env.GCE_URL ? `https://${process.env.GCE_URL}` : url;
 
-let image_path = {}
-fs.readdir('./public/asset/', (err, files) => {
-    files.forEach(file => {
-        let file_name = './public/asset/'+file;
-        fs.readFile(file_name, function( err, content ) {
-            //image_path[file] = "data:image/png;base64," + content.toString( 'base64' );
-            //console.log(image_path[file]);
-            image_path[file] = `${url}/asset/` + file;
-        });
-    });
-});
-
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(function(req, res, next) {
@@ -569,7 +557,7 @@ app.use(function(req, res, next) {
 app.post("/", async(req, res) => {
     const chart = req.body.chart;
     const newChart = preprocessChart(chart);
-    const svgString = chart2svg(newChart);
+    const svgString = chart2svg(newChart, `${req.protocol}://${req.headers.host}/asset`);
     const response = `
     <!DOCTYPE html>
     <html lang="en">
@@ -595,7 +583,7 @@ app.post("/", async(req, res) => {
 app.post('/landscape', async(req, res) => {
     const chart = req.body.chart;
     const newChart = preprocessChart(chart);
-    const svgString = chart2svg(newChart, `asset`);
+    const svgString = chart2svg(newChart, `${req.protocol}://${req.headers.host}/asset`);
     // 時間計測
     const start = new Date();
     const png = await svgChart2png(svgString);
