@@ -56,13 +56,18 @@ app.post('/landscape', async(req, res) => {
     const url = `${req.protocol}://${req.headers.host}`;
     console.log(url);
     const svgString = chart2svg(newChart, `${url}/asset`, pixelsPerBeat);
-    // 時間計測
-    const start = new Date();
-    const png = await svgChart2png(svgString);
-    const end = new Date();
-    console.log(end - start);
-    const pngString = png.toString('base64');
-    res.render('landscape', {pixelsPerBeat:pixelsPerBeat, svgString: svgString, pngString: pngString, elapsedTime: end-start});
+    // vercelは横長に対応してないので縦長で生成
+    if(process.env.VERCEL_URL){
+        res.render('portrait', {svgString: svgString})
+    } else {
+        // 時間計測
+        const start = new Date();
+        const png = await svgChart2png(svgString);
+        const end = new Date();
+        console.log(end - start);
+        const pngString = png.toString('base64');
+        res.render('landscape', {pixelsPerBeat:pixelsPerBeat, svgString: svgString, pngString: pngString, elapsedTime: end-start});
+    }
 });
 
 app.get('/', (req, res) => {
