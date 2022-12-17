@@ -1,5 +1,6 @@
 window.onload = () => {
     const canvas = document.getElementById('chart-landscape');
+    canvas.height = pixelsPerBeat * 8;
     const ctx = canvas.getContext("2d");
     const chartImage = new Image();
     chartImage.src = "data:image/png;base64," + pngString;

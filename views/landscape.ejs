@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+    <html lang="ja">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css">
+        <script>
+            var pixelsPerBeat = parseInt("<%= pixelsPerBeat %>");
+            var pngString = "<%= pngString %>";
+        </script>
+        <script src="js/landscape.js"></script>
+        <script src="js/download.js"></script>
+        <style>
+            body {
+                background-color: #003040;
+            }
+            .container {
+                display:flex;
+                padding: 10px;
+                align-items: flex-start;
+
+            }
+            .landscape {
+                background-color: #000000;
+                display: flex;
+                border: 8px solid #ba55d3;
+                border-radius: 10px;
+                margin-left: 10px;
+            }
+            .btn {
+                background-color: DodgerBlue;
+                border: none;
+                color: white;
+                cursor: pointer;
+                font-size: 20px;
+                position: -webkit-sticky;
+                position: sticky;
+                top: 0;
+                padding: 3px;
+            }
+            .btn:hover {
+                background-color: RoyalBlue;
+            }
+            #chart {
+                background-color: #000000;
+                border: 8px solid #ba55d3;
+                border-radius: 10px;
+            }
+            #chart-landscape {
+                height: 600px;
+            }
+        </style>
+    </head>
+    <body>
+        <div><font color="white">変換時間: <%= elapsedTime %>ms</font></div>
+        <div class="container">
+            <div id="chart">
+                <%- svgString %>
+            </div>
+            <div class="landscape">
+                <div><button class="btn" onclick="download()"><i class="fa fa-download">DL</i></button></div>
+                <canvas id="chart-landscape" width="160px"></canvas>
+            </div>
+        </div>
+    </body>
+    </html>
