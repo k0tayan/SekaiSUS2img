@@ -1,6 +1,6 @@
 # SekaiSUS2img
 Convert Project Sekai SUS to Image  
-https://sekai-sus-2img.vercel.app/
+https://sus2img.palettetool.com
 
 ## Original Source
 Chart Image Converter is modified from Erik's (pjsek.ai) version:  
